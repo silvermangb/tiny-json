@@ -24,6 +24,11 @@ decode_parser = subparsers.add_parser('templatize')
 decode_parser.add_argument('--json')
 
 def set_value_by_path(dictionary, path, value):
+    '''
+    Given a path from root to leaf, create a key/value
+    pair in the dictionary.
+    '''
+    path = key_func(path)
     path_list = path.split('.')
     current = dictionary
     for key in path_list[:-1]:
@@ -31,6 +36,10 @@ def set_value_by_path(dictionary, path, value):
     current[path_list[-1]] = value
 
 def key_func(path):
+    '''
+    Given a path to an entry in a dictionary remove
+    the leading '.' if it is present.
+    '''
     if not path:
         return path
     elif path[0] == '.':
@@ -39,6 +48,12 @@ def key_func(path):
         return path
 
 def encode(msg):
+    '''
+    Encode (serialize) a JSON object represented by a 
+    dictionary to a comma separated values string. This
+    produces a very small representation of the JSON which
+    can later be decoded (deserialized) by tiny-json.
+    '''
     def _encode(msg, l, path):
         for key, value in msg.items():
             if isinstance(value, dict):
@@ -77,26 +92,30 @@ def decode(msg_template, e):
                 _decode_list(value,p,v)
                 d[key_func(path + '.' + key)] = v
             else:
-                _key = key_func(path + '.' + key)
                 value = p.pop(0)
-                set_value_by_path(d,_key,urllib.parse.unquote(value))
+                set_value_by_path(d,path + '.' + key,urllib.parse.unquote(value))
     d = {}
     _decode(msg_template,e.split(','),'',d)
     return d
 
 def templatize(msg):
-    for key, value in msg.items():
-        if isinstance(value, dict):
-            templatize(value)
-        elif isinstance(value, list):
-            for index, item in enumerate(value):
-                if isinstance(item, dict):
-                    templatize(item)
-                else:
-                    value[index] = ""
-        else:
-            msg[key] = ""
-
+    def _templatize(msg,path,keys):
+        for key, value in msg.items():
+            if isinstance(value, dict):
+                _templatize(value,path + '.' + key, keys)
+            elif isinstance(value, list):
+                keys.append(key_func(path + '.' + key))
+                for index, item in enumerate(value):
+                    if isinstance(item, dict):
+                        _templatize(item, path + '.' + key, keys)
+                    else:
+                        value[index] = ""
+            else:
+                msg[key] = ""
+                keys.append(key_func(path + '.' + key))
+    keys = []
+    _templatize(msg,'',keys)
+    return keys
 
 if __name__=="__main__":
     args = parser.parse_args()
