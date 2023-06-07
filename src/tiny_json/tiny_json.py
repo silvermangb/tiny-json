@@ -20,15 +20,17 @@ else:
 encode_parser = subparsers.add_parser('encode')
 encode_parser.add_argument('--json')
 encode_parser.add_argument('--show-json-template', action='store_true')
+encode_parser.add_argument('--show-keys', action='store_true')
 
 # Create the parser for the "decode" command
 decode_parser = subparsers.add_parser('decode')
 decode_parser.add_argument('--encoded-json')
 decode_parser.add_argument('--json-template')
 
-# Create the parser for the "decode" command
-decode_parser = subparsers.add_parser('templatize')
-decode_parser.add_argument('--json')
+# Create the parser for the "templatize" command
+templatize_parser = subparsers.add_parser('templatize')
+templatize_parser.add_argument('--json')
+templatize_parser.add_argument('--show-keys', action='store_true')
 
 def set_value_by_path(dictionary, path, value):
     '''
@@ -129,19 +131,25 @@ if __name__=="__main__":
     if args.command == "encode":
         input_json = json.loads(args.json)
         e = encode(input_json)
-        if args.show_json_template:
-            templatize(input_json)
+        k = ''
+        t = ''
+        if args.show_json_template and args.show_keys:
+            k = ','.join(templatize(input_json))
             t = json.dumps(input_json)
-        else:
-            t = ''
-        sys.stdout.write('%s %s' % (e,t))
+        elif args.show_json_template:
+             t = json.dumps(input_json)
+        elif args.show_keys:
+             k = ','.join(templatize(input_json))                      
+        sys.stdout.write('%s %s %s' % (e,t,k))
     elif args.command == "decode":
         decoded_json = decode(json.loads(args.json_template),args.encoded_json)
         sys.stdout.write('%s' % json.dumps(decoded_json))
     elif args.command == "templatize":
         input_json = json.loads(args.json)
-        templatize(input_json)
-        sys.stdout.write(json.dumps(input_json))
+        k = ','.join(templatize(input_json))
+        if not args.show_keys:
+            k = ''
+        sys.stdout.write('%s %s' % (json.dumps(input_json),k))
     else:
         print("usage: ...")
  
