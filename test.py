@@ -26,3 +26,5 @@ def test_answer():
         #print(json.dumps(t))
         assert json.loads(v)==t
 
+if __name__=="__main__":
+    test_answer()

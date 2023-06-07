@@ -1,13 +1,20 @@
 #!/usr/bin/python3
 import sys
 import json
-import urllib.parse
 import argparse
+import six
 
 
 parser = argparse.ArgumentParser(prog="python3 tiny_json.py")
 
-subparsers = parser.add_subparsers(dest="command", required=True)
+
+# Check if Python version is 3.7 or higher
+if sys.version_info >= (3, 7):
+    subparsers = parser.add_subparsers(dest="command", required=True)
+else:
+    # For Python 2.x and Python 3.x < 3.7
+    subparsers = parser.add_subparsers(dest="command")
+    subparsers.required = True
 
 # Create the parser for the "encode" command
 encode_parser = subparsers.add_parser('encode')
@@ -63,10 +70,10 @@ def encode(msg):
                     if isinstance(item, dict):
                         _encode(item,l, path + '.' + key)
                     else:
-                        l.append(urllib.parse.quote(item))
+                        l.append(six.moves.urllib.parse.quote(item))
                         l.append(',')
             else:
-                l.append(urllib.parse.quote(value))
+                l.append(six.moves.urllib.parse.quote(value))
                 l.append(',')
     l = []
     _encode(msg,l,'')
@@ -83,7 +90,7 @@ def decode(msg_template, e):
                     _decode(item,p,'',_d)
                     v.append(_d)
                 else:
-                    v.append(urllib.parse.unquote(p.pop(0)))    
+                    v.append(six.moves.urllib.parse.unquote(p.pop(0)))    
         for key, value in msg_template.items():
             if isinstance(value, dict):
                 _decode(value, p, path + '.' + key, d)
@@ -93,7 +100,7 @@ def decode(msg_template, e):
                 d[key_func(path + '.' + key)] = v
             else:
                 value = p.pop(0)
-                set_value_by_path(d,path + '.' + key,urllib.parse.unquote(value))
+                set_value_by_path(d,path + '.' + key,six.moves.urllib.parse.unquote(value))
     d = {}
     _decode(msg_template,e.split(','),'',d)
     return d
