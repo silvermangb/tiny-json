@@ -5,7 +5,7 @@ import argparse
 import six
 
 
-parser = argparse.ArgumentParser(prog="python3 tiny_json.py")
+parser = argparse.ArgumentParser(prog="python tiny_json.py")
 
 
 # Check if Python version is 3.7 or higher
@@ -137,9 +137,10 @@ if __name__=="__main__":
             k = ','.join(templatize(input_json))
             t = json.dumps(input_json)
         elif args.show_json_template:
+             k = ','.join(templatize(input_json))
              t = json.dumps(input_json)
-        elif args.show_keys:
-             k = ','.join(templatize(input_json))                      
+        if not args.show_keys:
+             k = ''                     
         sys.stdout.write('%s %s %s' % (e,t,k))
     elif args.command == "decode":
         decoded_json = decode(json.loads(args.json_template),args.encoded_json)
